@@ -4,7 +4,6 @@
 int
 main(int argc, char *argv[])
 {
-  /*
   char* a = sbrk (15000);
 
   a[500] = 1;   // Fallo de página
@@ -28,7 +27,8 @@ main(int argc, char *argv[])
   }
 
   printf (1, "Debe imprimir 1: %d.\n", ++a[500]);
-  */
+
+ /*
   char* a = sbrk(4096);
   printf(1, "a = %d\n", a);
 
@@ -39,6 +39,6 @@ main(int argc, char *argv[])
 
   a[27] = 27;
   
-
+  */
   exit(0);
 }

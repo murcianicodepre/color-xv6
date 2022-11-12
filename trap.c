@@ -82,7 +82,7 @@ trap(struct trapframe *tf)
   case T_PGFLT : {  // Manejamos lazy alloc
       int ocolor = getColor();
 
-      uint err = PGROUNDDOWN(rcr2());       // Dirección virtual de página del fallo
+      uint err = PGROUNDDOWN(rcr2());                   // Dirección virtual de la página que ha producido el fallo
       for(; err < myproc()->sz; err += PGSIZE){
           char* mem = kalloc();
           if(mem==0){ cprintf("%clazy alloc: could not allocate page (1)\n%c", RED, ocolor); }
@@ -93,10 +93,12 @@ trap(struct trapframe *tf)
           }
       }
 
+      /*
       cprintf("pid %d %s: trap %d err %d on cpu %d "
             "eip 0x%x addr 0x%x--lazy page alloc\n",
             myproc()->pid, myproc()->name, tf->trapno,
             tf->err, cpuid(), tf->eip, rcr2());
+      */
       break;
   }
 

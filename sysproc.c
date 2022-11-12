@@ -46,33 +46,17 @@ sys_getpid(void)
   return myproc()->pid;
 }
 
-/*
-int
-sys_sbrk(void)
-{
-  int addr;
-  int n;
-
-  if(argint(0, &n) < 0)
-    return -1;
-  addr = myproc()->sz;
-  if(growproc(n) < 0)
-    return -1;
-  return addr;
-}
-*/
+/* Lazy alloc */
 int sys_sbrk(void){
-    int n, addr = myproc()->sz;
+    int n, szanterior = myproc()->sz;
     if(argint(0, &n) < 0){ return -1; }
     if(n>=0){
-      myproc()->sz += n;
-    } else{
-      uint s, oldsz = myproc()->sz, newsz = oldsz += n;
-      //if((myproc()->sz = deallocuvm(myproc()->pgdir, myproc()->sz, newsz)) == 0){ return -1; }  // Liberamos la página si se reservó
-      s = deallocuvm(myproc()->pgdir, oldsz, newsz);
-      myproc()->sz = s;
+        myproc()->sz += n;    // No reservamos la página... todavía
+    } else {                  // Si reducimos el tamaño, deberíamos liberar las páginas
+        if((myproc()->sz = deallocuvm(myproc()->pgdir, szanterior, szanterior + n)) == 0) { return -1; }
+        lcr3(V2P(myproc()->pgdir));  // Invalidate TLB.
     }
-    return addr;
+    return szanterior;
 }
 
 int
