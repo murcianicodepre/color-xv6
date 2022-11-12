@@ -83,7 +83,7 @@ main(void)
   dup(0);  // stderr
 
   for(;;){
-    //printIntro1();
+    printIntro1();
     printf(1, "%cinit: starting sh\n%c", YELLOW, LGREY);
     pid = fork();
     if(pid < 0){

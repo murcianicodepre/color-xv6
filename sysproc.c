@@ -62,11 +62,16 @@ sys_sbrk(void)
 }
 */
 int sys_sbrk(void){
-    int n, addr;
-    
+    int n, addr = myproc()->sz;
     if(argint(0, &n) < 0){ return -1; }
-    addr = myproc()->sz;
-    myproc()->sz += n;      // Simulamos haber aumentado el tamaño del proceso
+    if(n>=0){
+      myproc()->sz += n;
+    } else{
+      uint s, oldsz = myproc()->sz, newsz = oldsz += n;
+      //if((myproc()->sz = deallocuvm(myproc()->pgdir, myproc()->sz, newsz)) == 0){ return -1; }  // Liberamos la página si se reservó
+      s = deallocuvm(myproc()->pgdir, oldsz, newsz);
+      myproc()->sz = s;
+    }
     return addr;
 }
 
