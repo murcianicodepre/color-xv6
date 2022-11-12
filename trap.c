@@ -7,6 +7,7 @@
 #include "x86.h"
 #include "traps.h"
 #include "spinlock.h"
+#include "graphics.h"
 
 // Interrupt descriptor table (shared by all CPUs).
 struct gatedesc idt[256];
@@ -77,6 +78,26 @@ trap(struct trapframe *tf)
             cpuid(), tf->cs, tf->eip);
     lapiceoi();
     break;
+  
+  case T_PGFLT : {  // Manejamos lazy alloc
+      int ocolor = getColor();
+
+      uint err = PGROUNDDOWN(rcr2());       // Dirección virtual del fallo
+      char* mem = kalloc();                // Dirección física de nueva página
+      if(mem==0){
+          cprintf("%cpage could not be allocated\n%c", RED, ocolor);
+      }
+      memset(mem, 0, PGSIZE);
+      if(mappages(myproc()->pgdir, (char*)err, PGSIZE, V2P(mem), PTE_W|PTE_U) < 0){
+          cprintf("%cpage could not be allocated\n%c", RED, ocolor);
+          kfree(mem);
+      }
+      cprintf("pid %d %s: trap %d err %d on cpu %d "
+            "eip 0x%x addr 0x%x-- lazy page alloc\n",
+            myproc()->pid, myproc()->name, tf->trapno,
+            tf->err, cpuid(), tf->eip, rcr2());
+      break;
+  }
 
   //PAGEBREAK: 13
   default:

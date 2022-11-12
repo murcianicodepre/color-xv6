@@ -46,6 +46,7 @@ sys_getpid(void)
   return myproc()->pid;
 }
 
+/*
 int
 sys_sbrk(void)
 {
@@ -58,6 +59,15 @@ sys_sbrk(void)
   if(growproc(n) < 0)
     return -1;
   return addr;
+}
+*/
+int sys_sbrk(void){
+    int n, addr;
+    
+    if(argint(0, &n) < 0){ return -1; }
+    addr = myproc()->sz;
+    myproc()->sz += n;      // Simulamos haber aumentado el tamaño del proceso
+    return addr;
 }
 
 int

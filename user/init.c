@@ -7,46 +7,6 @@
 
 char *argv[] = { "sh", 0 };
 
-/* Intro 2 de xv6 */
-void printIntro2(){
-    /* Primera línea */
-    printf(1, "%c            _             ", YELLOW); 
-    printf(1, "%c__  ____     ____   \n", MAGENTA);
-    
-    /* Segunda línea */
-    printf(1, "%c   ___ ", RED);
-    printf(1, "%c___ ", BROWN);
-    printf(1, "%c| | ", YELLOW);
-    printf(1, "%c___  ", GREEN);
-    printf(1, "%c_ __  ", BLUE);
-    printf(1, "%c\\ \\/ /\\ \\   / / /_  \n", MAGENTA);
-
-    /* Tercera línea */
-    printf(1, "%c  / __", RED);
-    printf(1, "%c/ _ \\",BROWN);
-    printf(1, "%c| |", YELLOW);
-    printf(1, "%c/ _ \\", GREEN);
-    printf(1, "%c| '__|  ", BLUE);
-    printf(1, "%c\\  /  \\ \\ / / '_ \\ \n", MAGENTA);
-
-    /* Cuarta línea */
-    printf(1, "%c | (_", RED);
-    printf(1, "%c| (_) ", BROWN);
-    printf(1, "%c| | ", YELLOW);
-    printf(1, "%c(_) ", GREEN);
-    printf(1, "%c| |     ", BLUE);
-    printf(1, "%c/  \\   \\ V /| (_) |\n", MAGENTA);
-
-    /* Quinta línea */
-    printf(1, "%c  \\___", RED);
-    printf(1, "%c\\___/", BROWN);
-    printf(1, "%c|_|", YELLOW);
-    printf(1, "%c\\___/", GREEN);
-    printf(1, "%c|_|    ", BLUE);
-    printf(1, "%c/_/\\_\\   \\_/  \\___/ \n", MAGENTA);
-    printf(1, "%c   by diegojose.parragan@um.es\n\n", CYAN);
-}
-
 /* Intro 1 de xv6 */
 void printIntro1(){
     /*
@@ -123,7 +83,7 @@ main(void)
   dup(0);  // stderr
 
   for(;;){
-    printIntro1();
+    //printIntro1();
     printf(1, "%cinit: starting sh\n%c", YELLOW, LGREY);
     pid = fork();
     if(pid < 0){
