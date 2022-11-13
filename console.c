@@ -298,10 +298,9 @@ consputc(int c)
     for(;;)
       ;
   }
-
   if(c == BACKSPACE){
-    uartputc('\b'); uartputc(' '); uartputc('\b');
-  } else uartputc(c);
+    uartputc('\b'); uartputc(' '); uartputc('\b');    // No sacamos por serial los caracteres solo imprimibles en xv6
+  } else if((c < 0xe6 || c > 0xef) && c != RED && c != LRED && c != 0x10 && c != 0x11 && c != 0x1e && c != 0x1f ) uartputc(c);
   cgaputc(c);
 }
 
