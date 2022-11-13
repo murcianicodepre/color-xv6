@@ -46,7 +46,7 @@ sys_getpid(void)
   return myproc()->pid;
 }
 
-/* Lazy alloc */
+/* Lazy alloc: simulamos haber reservado las páginas, produciendo T_PGFLT y reservandolas entonces */
 int sys_sbrk(void){
     int n, szanterior = myproc()->sz;
     if(argint(0, &n) < 0){ return -1; }

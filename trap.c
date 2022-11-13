@@ -85,14 +85,14 @@ trap(struct trapframe *tf)
         uint verr = PGROUNDDOWN(rcr2());    // Recuperamos dirección virtual de la página que ha producido el fallo
 
         /* DEBUG */
-        /*
+        
         cprintf("%c", RED);
         cprintf("pid %d %s: trap %d err %d on cpu %d "
             "eip 0x%x addr 0x%x--page fault\n",
             myproc()->pid, myproc()->name, tf->trapno,
             tf->err, cpuid(), tf->eip, rcr2());
         cprintf("%c", ocolor);
-        */
+        
         /* DEBUG */
 
         /* Si la dirección se sale del program break o es del kernel, matamos al proceso */
@@ -112,7 +112,7 @@ trap(struct trapframe *tf)
         }
 
 
-        /* En otro caso, reservamos la página y se la mapeamos */
+        /* En otro caso, reservamos páginas y las mapeamos en la tabla de páginas del proceso */
         for(; verr < myproc()->sz; verr += PGSIZE){
             char* mem = kalloc();
             if(mem == 0){ cprintf("%clazy alloc: could not allocate page (1)\n%c", RED, ocolor); myproc()->killed = 1; }
