@@ -54,7 +54,7 @@ int sys_sbrk(void){
         myproc()->sz += n;    // No reservamos la página... todavía
     } else {                  // Si reducimos el tamaño, deberíamos liberar las páginas
         if((myproc()->sz = deallocuvm(myproc()->pgdir, szanterior, szanterior + n)) == 0) { return -1; }
-        lcr3(V2P(myproc()->pgdir));  // Invalidate TLB.
+        lcr3(V2P(myproc()->pgdir));  // Invalidamos traducciónes del TLB
     }
     return szanterior;
 }

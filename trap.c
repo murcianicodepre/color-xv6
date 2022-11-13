@@ -37,6 +37,7 @@ idtinit(void)
 void
 trap(struct trapframe *tf)
 {
+  int ocolor = getColor();
   if(tf->trapno == T_SYSCALL){
     if(myproc()->killed)
       exit(1);
@@ -79,42 +80,69 @@ trap(struct trapframe *tf)
     lapiceoi();
     break;
   
-  case T_PGFLT : {  // Manejamos lazy alloc
-      int ocolor = getColor();
+  /* Manejador de fallos de página */
+  case T_PGFLT : {              
+        uint verr = PGROUNDDOWN(rcr2());    // Recuperamos dirección virtual de la página que ha producido el fallo
 
-      uint err = PGROUNDDOWN(rcr2());                   // Dirección virtual de la página que ha producido el fallo
-      for(; err < myproc()->sz; err += PGSIZE){
-          char* mem = kalloc();
-          if(mem==0){ cprintf("%clazy alloc: could not allocate page (1)\n%c", RED, ocolor); }
-          memset(mem, 0, PGSIZE);
-          if(mappages(myproc()->pgdir, (char*)err, PGSIZE, V2P(mem), PTE_W|PTE_U) < 0){ 
-              cprintf("%clazy alloc: could not allocate page (2)\n%c", RED, ocolor); 
-              kfree(mem);
-          }
-      }
-
-      /*
-      cprintf("pid %d %s: trap %d err %d on cpu %d "
-            "eip 0x%x addr 0x%x--lazy page alloc\n",
+        /* DEBUG */
+        /*
+        cprintf("%c", RED);
+        cprintf("pid %d %s: trap %d err %d on cpu %d "
+            "eip 0x%x addr 0x%x--page fault\n",
             myproc()->pid, myproc()->name, tf->trapno,
             tf->err, cpuid(), tf->eip, rcr2());
-      */
-      break;
-  }
+        cprintf("%c", ocolor);
+        */
+        /* DEBUG */
+
+        /* Si la dirección se sale del program break o es del kernel, matamos al proceso */
+        if(PGROUNDUP(rcr2()) > myproc()->sz || verr >= KERNBASE){  
+            if(verr >= KERNBASE) cprintf("%caddr%c 0x%x%c: illegal memory access -- kill proc\n%c", RED, CYAN, rcr2(), RED, ocolor); 
+            else cprintf("%caddr%c 0x%x%c: page could not be allocated -- kill proc\n%c", RED, CYAN, rcr2(), RED, ocolor);
+            myproc()->killed = 1;
+            break;
+        } 
+
+        /* Página de guarda: sabiendo que está debajo de la de la pila, recuperamos la dirección y comprobamos si es la misma que la del error */
+        uint guarda = PGROUNDDOWN(myproc()->tf->esp) - PGSIZE;      
+        if(guarda==verr){
+            cprintf("%caddr%c 0x%x%c: illegal memory access -- kill proc\n%c", RED, CYAN, rcr2(), RED, ocolor);
+            myproc()->killed = 1;
+            break;
+        }
+
+
+        /* En otro caso, reservamos la página y se la mapeamos */
+        for(; verr < myproc()->sz; verr += PGSIZE){
+            char* mem = kalloc();
+            if(mem == 0){ cprintf("%clazy alloc: could not allocate page (1)\n%c", RED, ocolor); myproc()->killed = 1; }
+            memset(mem, 0, PGSIZE);
+            if(mappages(myproc()->pgdir, (char*)verr, PGSIZE, V2P(mem), PTE_W | PTE_U) < 0){
+                cprintf("%clazy alloc: could not allocate page (2)\n%c", RED, ocolor);
+                kfree(mem);
+                myproc()->killed = 1;
+            }
+        }
+
+        break;
+    }
 
   //PAGEBREAK: 13
   default:
     if(myproc() == 0 || (tf->cs&3) == 0){
       // In kernel, it must be our mistake.
+      cprintf("%c", RED);
       cprintf("unexpected trap %d from cpu %d eip %x (cr2=0x%x)\n",
               tf->trapno, cpuid(), tf->eip, rcr2());
       panic("trap");
     }
     // In user space, assume process misbehaved.
+    cprintf("%c", RED);
     cprintf("pid %d %s: trap %d err %d on cpu %d "
-            "eip 0x%x addr 0x%x--kill proc\n",
+            "eip 0x%x addr 0x%x -- kill proc\n",
             myproc()->pid, myproc()->name, tf->trapno,
             tf->err, cpuid(), tf->eip, rcr2());
+    cprintf("%c", ocolor);
     myproc()->killed = 1;
   }
 

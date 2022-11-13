@@ -135,7 +135,7 @@ cprintf(char *fmt, ...)
       consputc('%');
       break;
     case 'c' :
-      consputc(*argp);
+      consputc(*argp++);
       break;
     default:
       // Print unknown % sequence to draw attention.

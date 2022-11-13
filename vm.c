@@ -32,7 +32,7 @@ seginit(void)
 // Return the address of the PTE in page table pgdir
 // that corresponds to virtual address va.  If alloc!=0,
 // create any required page table pages.
-static pte_t *
+pte_t *
 walkpgdir(pde_t *pgdir, const void *va, int alloc)
 {
   pde_t *pde;
@@ -52,6 +52,11 @@ walkpgdir(pde_t *pgdir, const void *va, int alloc)
     *pde = V2P(pgtab) | PTE_P | PTE_W | PTE_U;
   }
   return &pgtab[PTX(va)];
+}
+
+/* Devuelve los flags de una página */
+uint getFlags(pde_t* pgdir, const void *va){
+    return PTE_FLAGS(walkpgdir(pgdir, va, 0));
 }
 
 // Create PTEs for virtual addresses starting at va that refer to
