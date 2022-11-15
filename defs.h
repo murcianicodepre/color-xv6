@@ -4,6 +4,7 @@ struct file;
 struct inode;
 struct pipe;
 struct proc;
+enum proc_prio;
 struct rtcdate;
 struct spinlock;
 struct sleeplock;
@@ -108,6 +109,8 @@ int             pipewrite(struct pipe*, char*, int);
 
 //PAGEBREAK: 16
 // proc.c
+enum proc_prio  getprocprio(int);
+int             setprocprio(int, enum proc_prio);
 int             cpuid(void);
 void            exit(int);
 int             fork(void);

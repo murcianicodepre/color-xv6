@@ -33,6 +33,7 @@ struct context {
 };
 
 enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
+enum proc_prio { NORMAL, HIGH };
 
 // Per-process state
 struct proc {
@@ -40,6 +41,7 @@ struct proc {
   pde_t* pgdir;                // Page table
   char *kstack;                // Bottom of kernel stack for this process
   enum procstate state;        // Process state
+  enum proc_prio prio;         // Process priority
   int pid;                     // Process ID
   int ret;                     // Process return value, set by exit(status)
   struct proc *parent;         // Parent process

@@ -1,5 +1,6 @@
 struct stat;
 struct rtcdate;
+enum proc_prio;
 
 // system calls
 extern int fork(void);
@@ -23,10 +24,12 @@ extern int dup2(int, int);
 extern int getpid(void);
 extern char* sbrk(int);
 extern int sleep(int);
+extern int setprio(int, enum proc_prio);
 extern int uptime(void);
 extern int date(struct rtcdate*);
 extern int color(int);
 extern int getcolor();
+extern int getprio(int);
 extern int clear();
 extern int draw(int, int, int, int, char*, char*);
 extern int drawline(int, int, int, int, int, int);

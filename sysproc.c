@@ -164,3 +164,22 @@ int sys_drawline(void){
     drawline(ax, ay, bx, by, color, pixel);
     return 0;
 }
+
+/* Devuelve la prioridad del proceso con pid */
+int sys_getprio(void){
+    int pid;
+    if(argint(0, &pid) < 0){ return -1; }
+    if(pid<0) return -1;
+    else return (int) getprocprio(pid);
+}
+
+/* Establece la prioridad de un proceso */
+int sys_setprio(void){
+    int pid;
+    enum proc_prio prio;
+    if(argint(0, &pid) < 0){ return -1; }
+    if(argint(1, (int*)&prio) < 0){ return -1; }
+    if(pid<0 || prio<0 || prio>2){ return -1; }
+    setprocprio(pid, prio);
+    return 0;
+}

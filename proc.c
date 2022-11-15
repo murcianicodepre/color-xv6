@@ -32,6 +32,17 @@ cpuid() {
   return mycpu()-cpus;
 }
 
+/* Dado un pid, devuelve la prioridad del proceso */
+enum proc_prio  getprocprio(int pid){
+    return NORMAL;
+}
+
+/* Dado un pid y una prioridad, se la asigana al proceso correspondiente */
+int setprocprio(int pid, enum proc_prio prio){
+    return 0;
+}
+
+
 // Must be called with interrupts disabled to avoid the caller being
 // rescheduled between reading lapicid and running through the loop.
 struct cpu*
@@ -126,6 +137,7 @@ userinit(void)
   p = allocproc();
 
   initproc = p;
+  p->prio = NORMAL;
   if((p->pgdir = setupkvm()) == 0)
     panic("userinit: out of memory?");
   inituvm(p->pgdir, _binary_initcode_start, (int)_binary_initcode_size);
@@ -215,6 +227,7 @@ fork(void)
   acquire(&ptable.lock);
 
   np->state = RUNNABLE;
+  np->prio = curproc->prio;
 
   release(&ptable.lock);
 

@@ -27,3 +27,5 @@
 #define SYS_getcolor 26
 #define SYS_color  27
 #define SYS_drawline 28
+#define SYS_getprio 29
+#define SYS_setprio 30
