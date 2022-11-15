@@ -330,8 +330,10 @@ copyuvm(pde_t *pgdir, uint sz)
   if((d = setupkvm()) == 0)
     return 0;
   for(i = 0; i < sz; i += PGSIZE){
-    if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
-      panic("copyuvm: pte should exist");
+
+    //if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
+      //panic("copyuvm: pte should exist");
+    pte = walkpgdir(pgdir, (void*) i, 0);
     
     /* Lazy alloc: la página no tiene que estar necesariamente por un error, sino porque el padre no ha llegado a mapearla */
     

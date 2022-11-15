@@ -85,13 +85,14 @@ trap(struct trapframe *tf)
         uint verr = PGROUNDDOWN(rcr2());    // Recuperamos dirección virtual de la página que ha producido el fallo
 
         /* DEBUG */
-        
+        /*
         cprintf("%c", RED);
         cprintf("pid %d %s: trap %d err %d on cpu %d "
             "eip 0x%x addr 0x%x--page fault\n",
             myproc()->pid, myproc()->name, tf->trapno,
             tf->err, cpuid(), tf->eip, rcr2());
         cprintf("%c", ocolor);
+        */
         
         /* DEBUG */
 
