@@ -33,7 +33,7 @@ struct context {
 };
 
 enum procstate { UNUSED, EMBRYO, SLEEPING, RUNNABLE, RUNNING, ZOMBIE };
-enum proc_prio { NORMAL, HIGH };
+//enum proc_prio { NORMAL, HIGH };
 
 // Per-process state
 struct proc {

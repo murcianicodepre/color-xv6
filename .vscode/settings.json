@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "traps.h": "c",
-        "spinlock.h": "c"
+        "spinlock.h": "c",
+        "user.h": "c",
+        "types.h": "c"
     }
 }

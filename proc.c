@@ -33,13 +33,33 @@ cpuid() {
 }
 
 /* Dado un pid, devuelve la prioridad del proceso */
-enum proc_prio  getprocprio(int pid){
-    return NORMAL;
+enum proc_prio getprocprio(int pid){
+    acquire(&ptable.lock);
+    for(int i=0; i<NPROC; i++){
+        struct proc p = ptable.proc[i];
+        if(p.pid==pid){
+            enum proc_prio prio = p.prio;
+            release(&ptable.lock);
+            return prio;
+        }
+    }
+    release(&ptable.lock);
+    return NORMAL;          // No debería alcanzarse
 }
 
 /* Dado un pid y una prioridad, se la asigana al proceso correspondiente */
-int setprocprio(int pid, enum proc_prio prio){
-    return 0;
+void setprocprio(int pid, enum proc_prio prio){
+    acquire(&ptable.lock);
+    for(int i=0; i<NPROC; i++){
+        struct proc* p = &(ptable.proc[i]);
+        if(p->pid==pid){
+            p->prio = prio;
+            release(&ptable.lock);
+            return;
+        }
+    }
+    release(&ptable.lock);
+    return;                 // No debería alcanzarse
 }
 
 

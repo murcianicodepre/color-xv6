@@ -17,6 +17,7 @@ UPROGS=\
 	rm\
 	sh\
 	stressfs\
+	testprioridad\
 	tsbrk1\
 	tsbrk2\
 	tsbrk3\

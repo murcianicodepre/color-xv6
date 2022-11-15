@@ -1,6 +1,5 @@
 struct stat;
 struct rtcdate;
-enum proc_prio;
 
 // system calls
 extern int fork(void);
