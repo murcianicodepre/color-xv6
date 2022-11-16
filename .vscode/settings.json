@@ -3,6 +3,7 @@
         "traps.h": "c",
         "spinlock.h": "c",
         "user.h": "c",
-        "types.h": "c"
+        "types.h": "c",
+        "fs.h": "c"
     }
 }
