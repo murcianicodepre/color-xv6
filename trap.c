@@ -90,19 +90,8 @@ trap(struct trapframe *tf)
             panic("trap");
         }
 
-        uint verr = PGROUNDDOWN(rcr2());    // Recuperamos dirección virtual de la página que ha producido el fallo
-        uint err = myproc()->tf->err;       // Código de error del fallo de página
-
-        /* DEBUG */ 
-        /*   
-        cprintf("%c", RED);
-        cprintf("pid %d %s: trap %d err %d on cpu %d "
-            "eip 0x%x addr 0x%x -- page fault\n",
-            myproc()->pid, myproc()->name, tf->trapno,
-            tf->err, cpuid(), tf->eip, rcr2());
-        cprintf("%c", ocolor);
-        */
-        /* DEBUG */
+        uint verr = PGROUNDDOWN(rcr2());    
+        uint err = myproc()->tf->err;       
 
         /* ¿Acceso a kernel o fuera del program break? Muerte */
         if(PGROUNDUP(rcr2()) > myproc()->sz || verr >= KERNBASE){  
@@ -112,11 +101,7 @@ trap(struct trapframe *tf)
             break;
         } 
 
-        /* ¿Acceso a la página de guarda? Muerte
-            - 5: violación de protección en espacio de usuario al leer 
-            - 7: violación de protección en espacio de usuario al escribir
-            - Otra forma sería recuperar la entrada y hacer & PTE_U para ver si es de usuario o no
-        */
+        /* ¿Desbordamiento de pila y acceso a página de guarda? Muerte */
         if(myproc()!=0 && (err == 7 || err == 5)){      
             cprintf("%caddr%c 0x%x%c err %d: illegal memory access -- kill proc\n%c", RED, CYAN, rcr2(), RED, err, ocolor);
             myproc()->killed = 1;
@@ -124,16 +109,15 @@ trap(struct trapframe *tf)
         }
 
         /* En otro caso, reservamos páginas */
-        for(; verr < myproc()->sz; verr += PGSIZE){
-            char* mem = kalloc();
-            if(mem == 0){ cprintf("%clazy alloc: could not allocate page (1)\n%c", RED, ocolor); myproc()->killed = 1; }
-            memset(mem, 0, PGSIZE);
-            if(mappages(myproc()->pgdir, (void*)verr, PGSIZE, V2P(mem), PTE_W | PTE_U) < 0){
-                cprintf("%clazy alloc: could not allocate page (2)\n%c", RED, ocolor);
-                kfree(mem);
-                myproc()->killed = 1;
-            }
+        char* mem = kalloc();
+        if(mem == 0){ cprintf("%clazy alloc: could not allocate page (1)\n%c", RED, ocolor); myproc()->killed = 1; }
+        memset(mem, 0, PGSIZE);
+        if(mappages(myproc()->pgdir, (void*)verr, PGSIZE, V2P(mem), PTE_W | PTE_U) < 0){
+            cprintf("%clazy alloc: could not allocate page (2)\n%c", RED, ocolor);
+            kfree(mem);
+            myproc()->killed = 1;
         }
+
         break;
     }
 

@@ -329,25 +329,8 @@ copyuvm(pde_t *pgdir, uint sz)
 
   if((d = setupkvm()) == 0)
     return 0;
-  for(i = 0; i < sz; i += PGSIZE){                      // Recorremos todo el tamaño, incluídas posibles páginas no mapeadas todavía
-    /*
-    if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
-      panic("copyuvm: pte should exist");
-    if(!(*pte & PTE_P))
-      panic("copyuvm: page not present");
-
-    pa = PTE_ADDR(*pte);
-    flags = PTE_FLAGS(*pte);
-    if((mem = kalloc()) == 0)
-      goto bad;
-    memmove(mem, (char*)P2V(pa), PGSIZE);
-    if(mappages(d, (void*)i, PGSIZE, V2P(mem), flags) < 0) {
-      kfree(mem);
-      goto bad;
-    }
-    */
-    
-    /* Solo si existe la entrada (creada de una llamada anterior a mappages) y si contiene una página válida, se hace el mapeo a la nueva tabla */
+  for(i = 0; i < sz; i += PGSIZE){                                          // Recorremos todo el tamaño, incluídas posibles páginas no mapeadas todavía
+    /* Solo si existe la entrada y la página está */
     if(((pte = walkpgdir(pgdir, (void*) i, 0)) != 0) && (*pte & PTE_P)){   
         if(!(*pte & PTE_P))
           panic("copyuvm: page not present");
