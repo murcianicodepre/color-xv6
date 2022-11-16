@@ -4,6 +4,7 @@
 int
 main(int argc, char *argv[])
 {
+  
   char* a = sbrk (15000);
 
   fork();

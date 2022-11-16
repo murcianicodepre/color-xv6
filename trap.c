@@ -81,22 +81,30 @@ trap(struct trapframe *tf)
     break;
   
   /* Manejador de fallos de página */
-  case T_PGFLT : {              
-        uint verr = PGROUNDDOWN(rcr2());    // Recuperamos dirección virtual de la página que ha producido el fallo
+  case T_PGFLT : {     
+        /* Fallo de página del usuario pero en kernel. Panic */         
+        if(myproc()==0){
+            cprintf("%c", RED);
+            cprintf("unexpected trap %d from cpu %d eip %x (cr2=0x%x)\n",
+                    tf->trapno, cpuid(), tf->eip, rcr2());
+            panic("trap");
+        }
 
-        /* DEBUG */
-        /*
+        uint verr = PGROUNDDOWN(rcr2());    // Recuperamos dirección virtual de la página que ha producido el fallo
+        uint err = myproc()->tf->err;       // Código de error del fallo de página
+
+        /* DEBUG */ 
+        /*   
         cprintf("%c", RED);
         cprintf("pid %d %s: trap %d err %d on cpu %d "
-            "eip 0x%x addr 0x%x--page fault\n",
+            "eip 0x%x addr 0x%x -- page fault\n",
             myproc()->pid, myproc()->name, tf->trapno,
             tf->err, cpuid(), tf->eip, rcr2());
         cprintf("%c", ocolor);
         */
-        
         /* DEBUG */
 
-        /* Si la dirección se sale del program break o es del kernel, matamos al proceso */
+        /* ¿Acceso a kernel o fuera del program break? Muerte */
         if(PGROUNDUP(rcr2()) > myproc()->sz || verr >= KERNBASE){  
             if(verr >= KERNBASE) cprintf("%caddr%c 0x%x%c: illegal memory access -- kill proc\n%c", RED, CYAN, rcr2(), RED, ocolor); 
             else cprintf("%caddr%c 0x%x%c: page could not be allocated -- kill proc\n%c", RED, CYAN, rcr2(), RED, ocolor);
@@ -104,27 +112,28 @@ trap(struct trapframe *tf)
             break;
         } 
 
-        /* Página de guarda: sabiendo que está debajo de la de la pila, recuperamos la dirección y comprobamos si es la misma que la del error */
-        uint guarda = PGROUNDDOWN(myproc()->tf->esp) - PGSIZE;      
-        if(guarda==verr){
-            cprintf("%caddr%c 0x%x%c: illegal memory access -- kill proc\n%c", RED, CYAN, rcr2(), RED, ocolor);
+        /* ¿Acceso a la página de guarda? Muerte
+            - 5: violación de protección en espacio de usuario al leer 
+            - 7: violación de protección en espacio de usuario al escribir
+            - Otra forma sería recuperar la entrada y hacer & PTE_U para ver si es de usuario o no
+        */
+        if(myproc()!=0 && (err == 7 || err == 5)){      
+            cprintf("%caddr%c 0x%x%c err %d: illegal memory access -- kill proc\n%c", RED, CYAN, rcr2(), RED, err, ocolor);
             myproc()->killed = 1;
             break;
         }
 
-
-        /* En otro caso, reservamos páginas y las mapeamos en la tabla de páginas del proceso */
+        /* En otro caso, reservamos páginas */
         for(; verr < myproc()->sz; verr += PGSIZE){
             char* mem = kalloc();
             if(mem == 0){ cprintf("%clazy alloc: could not allocate page (1)\n%c", RED, ocolor); myproc()->killed = 1; }
             memset(mem, 0, PGSIZE);
-            if(mappages(myproc()->pgdir, (char*)verr, PGSIZE, V2P(mem), PTE_W | PTE_U) < 0){
+            if(mappages(myproc()->pgdir, (void*)verr, PGSIZE, V2P(mem), PTE_W | PTE_U) < 0){
                 cprintf("%clazy alloc: could not allocate page (2)\n%c", RED, ocolor);
                 kfree(mem);
                 myproc()->killed = 1;
             }
         }
-
         break;
     }
 

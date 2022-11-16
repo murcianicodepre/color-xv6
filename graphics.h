@@ -8,7 +8,7 @@
    by diegojose.parragan@um.es
 */
 
-/* Bytecolors, 16 CGA colors. Uses line 0xe, which are greek letters */
+/* Bytecolors, 16 CGA colors */
 #define RED 0xe0
 #define LRED 0xe1
 #define MAGENTA 0x10
@@ -56,6 +56,3 @@
 #define TBLOCK3 0xb2    // Transparent block 3
 #define MBLOCK 0xfe     // Mini block
 #define CBLOCK 0x16     // Center block
-
-/* Lines */
-#define LLEFT 0xb3      // Left line

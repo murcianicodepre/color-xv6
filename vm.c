@@ -74,8 +74,8 @@ mappages(pde_t *pgdir, void *va, uint size, uint pa, int perm)
   for(;;){
     if((pte = walkpgdir(pgdir, a, 1)) == 0)
       return -1;
-    //if(*pte & PTE_P)
-      //panic("remap");
+    if(*pte & PTE_P)
+      panic("remap");
     *pte = pa | perm | PTE_P;
     if(a == last)
       break;
@@ -329,17 +329,13 @@ copyuvm(pde_t *pgdir, uint sz)
 
   if((d = setupkvm()) == 0)
     return 0;
-  for(i = 0; i < sz; i += PGSIZE){
+  for(i = 0; i < sz; i += PGSIZE){                      // Recorremos todo el tamaño, incluídas posibles páginas no mapeadas todavía
+    /*
+    if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
+      panic("copyuvm: pte should exist");
+    if(!(*pte & PTE_P))
+      panic("copyuvm: page not present");
 
-    //if((pte = walkpgdir(pgdir, (void *) i, 0)) == 0)
-      //panic("copyuvm: pte should exist");
-    pte = walkpgdir(pgdir, (void*) i, 0);
-    
-    /* Lazy alloc: la página no tiene que estar necesariamente por un error, sino porque el padre no ha llegado a mapearla */
-    
-    //if(!(*pte & PTE_P))
-      //panic("copyuvm: page not present");
-    
     pa = PTE_ADDR(*pte);
     flags = PTE_FLAGS(*pte);
     if((mem = kalloc()) == 0)
@@ -348,6 +344,21 @@ copyuvm(pde_t *pgdir, uint sz)
     if(mappages(d, (void*)i, PGSIZE, V2P(mem), flags) < 0) {
       kfree(mem);
       goto bad;
+    }
+    */
+    
+    /* Solo si existe la entrada (creada de una llamada anterior a mappages) y si contiene una página válida, se hace el mapeo a la nueva tabla */
+    if(((pte = walkpgdir(pgdir, (void*) i, 0)) != 0) && (*pte & PTE_P)){   
+        if(!(*pte & PTE_P))
+          panic("copyuvm: page not present");
+        pa = PTE_ADDR(*pte);
+        flags = PTE_FLAGS(*pte);
+        if((mem = kalloc()) == 0) goto bad;
+        memmove(mem, (char*)P2V(pa), PGSIZE);
+        if(mappages(d, (void*)i, PGSIZE, V2P(mem), flags) < 0){ 
+          kfree(mem); 
+          goto bad;
+        }
     }
   }
   return d;
