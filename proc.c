@@ -299,7 +299,7 @@ exit(int status)
 
   // Jump into the scheduler, never to return.
   curproc->state = ZOMBIE;
-  curproc->ret = status;
+  curproc->ret = status << 8;
   sched();
   panic("zombie exit");
 }
@@ -324,11 +324,8 @@ wait(int* status)
       if(p->state == ZOMBIE){     // Un hijo que ha terminado queda como zombie
         // Found one.
 
-        /* Si status != NULL, ponemos el valor adecuado */
-        if(status !=  NULL){
-          if(p->killed!=0){ *status = p->tf->trapno; *status+=1; }   // Si el proceso fue matado, ponemos en el byte inferior qué señal lo mató
-          else { *status = p->ret << 8; }                           // Si terminó normalmente, devolvemos el valor de retorno en el byte superior
-        }
+
+        if(status != NULL) { *status = p->ret; }
 
         pid = p->pid;
         kfree(p->kstack);
@@ -365,7 +362,7 @@ wait(int* status)
 //  - eventually that process transfers control
 //      via swtch back to the scheduler.
 
-/*
+
 void
 scheduler(void)
 {
@@ -402,53 +399,24 @@ scheduler(void)
 
   }
 }
+
+
+/* Planificador con dos listas
+  > Alta prioridad 
+  > Baja prioridad
 */
 
-/* --- Planificador con prioridades ---
-  > Se busca un proceso en estado RUNNABLE
-  > Una vez encontrado, si su prioridad es HIGH es el elegido
-  > Si es NORMAL, lo almacenamos temporalmente y buscamos otro con prioridad HIGH.  
-  > Si encontramos otro con prioridad HIGH, lo elegimos. El otro NORMAL se descarta.
-*/
+/*
 void scheduler(void){
-    struct proc* p;         
-    struct proc* np = 0;                                  
-    struct cpu* c = mycpu();                          
-      c->proc = 0;
+    struct proc* p;
+    struct cpu* c = mycpu();
+    c->proc = 0;
 
-    // Bucle eterno
     for(;;){
-        sti();                                                // Habilitamos interrupciones en este procesador antes de bloquear la tabla de procesos
-        acquire(&ptable.lock);  
-        p = ptable.proc;
-        while(p < &ptable.proc[NPROC]){
-          if(p->state==RUNNABLE){
-              if(p->prio==HIGH){        // Proceso con prioridad alta: lo lanzamos directamente
-                  c->proc = p;
-                  switchuvm(p);
-                  p->state = RUNNING;
-                  swtch(&(c->scheduler), p->context);
-                  switchkvm();
-                  c->proc = 0;
-              } else if(np==0){                  // Proceso con prioridad normal; guardamos la posición no la teníamos ya
-                  np = p;
-              }
-          }
-          p++;
-          if(p==&ptable.proc[NPROC] && np!=0){  // Si hemos llegado al final y teníamos un proceso con prioridad NORMAL apuntado, movemos el puntero p
-              p = np;
-              c->proc = p;
-              switchuvm(p);
-              p->state = RUNNING;
-              swtch(&(c->scheduler), p->context);
-              switchkvm();
-              c->proc = 0;
-              np = 0;
-          }
-        }
-        release(&ptable.lock);
+        sti();
     }
 }
+*/
 
 // Enter scheduler.  Must hold only ptable.lock
 // and have changed proc->state. Saves and restores

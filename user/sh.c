@@ -169,11 +169,14 @@ main(void)
     if(fork1() == 0)
       runcmd(parsecmd(buf));
     wait(&status);
+    char ocolor = getcolor();
     if(WIFEXITED(status)){
-      char color = getcolor(), ocolor = GREEN;
+      char color = GREEN;
       int ret = WEXITSTATUS(status);
-      if(ret>0 || ret<0) { ocolor = LRED; }
-      printf(1, "Output code: %c%d%c\n", ocolor, ret, color);
+      if(ret>0 || ret<0) { color = LRED; }
+      printf(1, "Output code: %c%d%c\n", color, ret, ocolor);
+    } else {
+      printf(1, "Output code: %c%d%c\n", CYAN, WEXITTRAP(status), ocolor);
     }
   }
   exit(0);
