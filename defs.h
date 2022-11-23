@@ -24,7 +24,7 @@ void            clear(void);                                // Screen cleaning
 void            setColor(int);                              // Sets text color
 int             getColor();                                 // Returns current color
 void            draw(int, int, int, int, char*, char*);     // Direct draw to frame buffer
-void            drawline(int, int, int, int, int, int);   // Line to frame buffer
+void            drawline(int, int, int, int, int, int);     // Line to frame buffer
 void            consoleintr(int(*)(void));
 void            panic(char*) __attribute__((noreturn));
 

@@ -8,7 +8,8 @@
    by diegojose.parragan@um.es
 */
 
-/* Bytecolors, 16 CGA colors */
+/* Bytecolors: characters that represents 16 CGA colors, foreground and background */
+/* FOREGROUND */
 #define RED 0xe0
 #define LRED 0xe1
 #define MAGENTA 0x10
@@ -25,27 +26,46 @@
 #define LGREY 0xed
 #define BLACK 0xee
 #define BROWN 0xef
+
+/* BACKGROUND */
+#define BRED 0xc0
+#define BLRED 0xc1
+#define BMAGENTA 0xc2
+#define BDMAGENTA 0xc3
+#define BCYAN 0xc4
+#define BDCYAN 0xc5
+#define BBLUE 0xc6
+#define BDBLUE 0xc7
+#define BGREEN 0xc8
+#define BDGREEN 0xc9
+#define BYELLOW 0xca
+#define BWHITE 0xcb
+#define BGREY 0xcc
+#define BLGREY 0xcd
+#define BBLACK 0xce
+#define BBROWN 0xcf
+
+
 /*
 #define BLACK 0x0
-#define DBLUE 0x100
-#define DGREEN 0x200
-#define DCYAN 0x300
-#define RED 0X400
-#define DMAGENTA 0x500
-#define BROWN 0x600
-#define LGREY 0x700
-#define GREY 0x800
-#define BLUE 0x900
-#define GREEN 0xA00
-#define CYAN 0xB00
-#define LRED 0xC00
-#define MAGENTA 0xD00
-#define YELLOW 0xE00
-#define WHITE 0xF00
+#define DBLUE 0x1
+#define DGREEN 0x2
+#define DCYAN 0x3
+#define RED 0x4
+#define DMAGENTA 0x5
+#define BROWN 0x6
+#define LGREY 0x7
+#define GREY 0x8
+#define BLUE 0x9
+#define GREEN 0xa
+#define CYAN 0xb
+#define LRED 0xc
+#define MAGENTA 0xd
+#define YELLOW 0xe
+#define WHITE 0xf
 */
 
-
-/* Blocks */
+/* Block characters */
 #define BLOCK 0xdb     // Whole block
 #define HBLOCK 0xdc     // Half block, lower part
 #define LBLOCK 0xdd     // Left side block

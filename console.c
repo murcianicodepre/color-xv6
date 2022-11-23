@@ -25,46 +25,67 @@ static struct {
   int locking;
 } cons;
 
-int CURRENT_COLOR = 0x700;    // Por defecto, el color de xv6 es gris sobre fondo negro.
+int FOREGROUND_COLOR = 0x7;           // Texto gris      
+int BACKGROUND_COLOR = 0x0;           // Fondo negro
 
-/* Devuelve el byte color asociado al código de color cga */
-int getbytecolor(int colorcode){
-  if(colorcode == 0x0){ return 0xee;}
-  else if(colorcode == 0x100){ return DBLUE; }
-  else if(colorcode == 0x200){ return DGREEN; }
-  else if(colorcode == 0x300){ return DCYAN; }
-  else if(colorcode == 0x400){ return RED; }
-  else if(colorcode == 0x500){ return DMAGENTA; }
-  else if(colorcode == 0x600){ return BROWN; }
-  else if(colorcode == 0x700){ return LGREY; }
-  else if(colorcode == 0x800){ return GREY; }
-  else if(colorcode == 0x900){ return BLUE; }
-  else if(colorcode == 0xa00){ return GREEN; }
-  else if(colorcode == 0xb00){ return CYAN; }
-  else if(colorcode == 0xc00){ return LRED; }
-  else if(colorcode == 0xd00){ return MAGENTA; }
-  else if(colorcode == 0xe00){ return YELLOW; }
+/* Foreground color to bytecolor */
+int getfbytecolor(int colorcode){
+  if(colorcode == 0x0){ return BLACK;}
+  else if(colorcode == 0x1){ return DBLUE; }
+  else if(colorcode == 0x2){ return DGREEN; }
+  else if(colorcode == 0x3){ return DCYAN; }
+  else if(colorcode == 0x4){ return RED; }
+  else if(colorcode == 0x5){ return DMAGENTA; }
+  else if(colorcode == 0x6){ return BROWN; }
+  else if(colorcode == 0x7){ return LGREY; }
+  else if(colorcode == 0x8){ return GREY; }
+  else if(colorcode == 0x9){ return BLUE; }
+  else if(colorcode == 0xa){ return GREEN; }
+  else if(colorcode == 0xb){ return CYAN; }
+  else if(colorcode == 0xc){ return LRED; }
+  else if(colorcode == 0xd){ return MAGENTA; }
+  else if(colorcode == 0xe){ return YELLOW; }
   else { return WHITE; }
 }
 
-/* Devuelve el código de color cga asociado al byte color */
+/* Background color to bytecolor */
+int getbbytecolor(int colorcode){
+  if(colorcode == 0x0){ return BBLACK;}
+  else if(colorcode == 0x1){ return BDBLUE; }
+  else if(colorcode == 0x2){ return BDGREEN; }
+  else if(colorcode == 0x3){ return BDCYAN; }
+  else if(colorcode == 0x4){ return BRED; }
+  else if(colorcode == 0x5){ return BDMAGENTA; }
+  else if(colorcode == 0x6){ return BBROWN; }
+  else if(colorcode == 0x7){ return BLGREY; }
+  else if(colorcode == 0x8){ return BGREY; }
+  else if(colorcode == 0x9){ return BBLUE; }
+  else if(colorcode == 0xa){ return BGREEN; }
+  else if(colorcode == 0xb){ return BCYAN; }
+  else if(colorcode == 0xc){ return BLRED; }
+  else if(colorcode == 0xd){ return BMAGENTA; }
+  else if(colorcode == 0xe){ return BYELLOW; }
+  else { return BWHITE; }
+}
+
+/* Bytecolor to color code */
 int getcolorcode(int bytecolor){
-  if(bytecolor == RED){ return 0x400; }
-    else if(bytecolor == LRED){ return 0xc00; }
-    else if(bytecolor == MAGENTA){ return 0xd00; }
-    else if(bytecolor == DMAGENTA){ return 0x500; }
-    else if(bytecolor == CYAN){ return 0xb00; }
-    else if(bytecolor == DCYAN){ return 0x300; }
-    else if(bytecolor == BLUE){ return 0x900; }
-    else if(bytecolor == DBLUE){ return 0x100; }
-    else if(bytecolor == GREEN){ return 0xa00; }
-    else if(bytecolor == DGREEN){ return 0x200; }
-    else if(bytecolor == YELLOW){ return 0xe00; }
-    else if(bytecolor == WHITE){ return 0xf00; }
-    else if(bytecolor == GREY){ return 0x800; }
-    else if(bytecolor == LGREY){ return 0x700; }
-    else if(bytecolor == BLACK){ return 0x000; }
-    else { return 0x600; }
+  if(bytecolor == RED || bytecolor == BRED){ return 0x4; }
+    else if(bytecolor == LRED || bytecolor == BLRED){ return 0xc; }
+    else if(bytecolor == MAGENTA || bytecolor == BMAGENTA){ return 0xd; }
+    else if(bytecolor == DMAGENTA || bytecolor == BDMAGENTA){ return 0x5; }
+    else if(bytecolor == CYAN || bytecolor == BCYAN){ return 0xb; }
+    else if(bytecolor == DCYAN || bytecolor == BDCYAN){ return 0x3; }
+    else if(bytecolor == BLUE || bytecolor == BBLUE){ return 0x9; }
+    else if(bytecolor == DBLUE || bytecolor == BDBLUE){ return 0x1; }
+    else if(bytecolor == GREEN || bytecolor == BGREEN){ return 0xa; }
+    else if(bytecolor == DGREEN || bytecolor == BDGREEN){ return 0x2; }
+    else if(bytecolor == YELLOW || bytecolor == BYELLOW){ return 0xe; }
+    else if(bytecolor == WHITE || bytecolor == BWHITE){ return 0xf; }
+    else if(bytecolor == GREY || bytecolor == BGREY){ return 0x8; }
+    else if(bytecolor == LGREY || bytecolor == BLGREY){ return 0x7; }
+    else if(bytecolor == BLACK || bytecolor == BBLACK){ return 0x0; }
+    else { return 0x6; }
 }
 
 static void
@@ -183,9 +204,9 @@ void clear(){
   outb(CRTPORT, 15);
   pos |= inb(CRTPORT+1);
 
-  /* Limpiamos la pantalla. Borramos todo su contenido */
+  /* Limpiamos la pantalla. Borramos todo su contenido por el color de fondo */
   pos = 0;                                          // Movemos el cursor a la parte de arriba
-  memset(crt, 0, sizeof(crt[0]) * 24 * 80);         // Limpiamos la pantalla
+  memset(crt, (BACKGROUND_COLOR<<8) | 0x0000, sizeof(crt[0]) * 24 * 80);         // Limpiamos la pantalla
 
   /* Guardamos la nueva posición del cursor */
   outb(CRTPORT, 14);
@@ -250,12 +271,12 @@ void drawline(int ax, int ay, int bx, int by, int color, int pixel){
 
 /* Fuerza el cambio del color actual */
 void setColor(int colorcode){
-    CURRENT_COLOR = colorcode;
+    FOREGROUND_COLOR = colorcode;
 }
 
 /* Devuelve el color actual */
 int getColor(){
-  return getbytecolor(CURRENT_COLOR);
+  return getfbytecolor(FOREGROUND_COLOR);
 }
 
 static void
@@ -271,8 +292,12 @@ cgaputc(int c)
   if(c == '\n'){ pos += 80 - pos%80; }
   else if(c == BACKSPACE){ if(pos>0) pos--; }
   /* Revisar si se cambia codificación de caracteres de colores */
-  else if((c >= 0xe6 && c <= 0xef) || c == RED || c == LRED || c == 0x10 || c == 0x11 || c == 0x1e || c == 0x1f ){ CURRENT_COLOR = getcolorcode(c); }
-  else crt[pos++] = (c & 0xff) | CURRENT_COLOR;
+  else if((c >= 0xe6 && c <= 0xef) || c == RED || c == LRED || c == 0x10 || c == 0x11 || c == 0x1e || c == 0x1f ){ FOREGROUND_COLOR = getcolorcode(c); }
+  else if(c >= 0xc0 && c <= 0xcf){ BACKGROUND_COLOR = getcolorcode(c); }
+  else {
+    int color = (FOREGROUND_COLOR) | ((BACKGROUND_COLOR << 1) | 0x00);
+    crt[pos++] = (c & 0xff) | (color << 8);
+  }
 
   if(pos < 0 || pos > 25*80)
     panic("pos under/overflow");

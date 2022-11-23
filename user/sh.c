@@ -169,13 +169,12 @@ main(void)
     if(fork1() == 0)
       runcmd(parsecmd(buf));
     wait(&status);
-    /*
     if(WIFEXITED(status)){
       char color = getcolor(), ocolor = GREEN;
       int ret = WEXITSTATUS(status);
       if(ret>0 || ret<0) { ocolor = LRED; }
       printf(1, "Output code: %c%d%c\n", ocolor, ret, color);
-    }*/
+    }
   }
   exit(0);
 }

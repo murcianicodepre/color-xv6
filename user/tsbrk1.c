@@ -27,18 +27,6 @@ main(int argc, char *argv[])
   }
 
   printf (1, "Debe imprimir 1: %d.\n", ++a[500]);
-
- /*
-  char* a = sbrk(4096);
-  printf(1, "a = %d\n", a);
-
-  a[27] = 27;
-
-  printf(1, "sbrk(-4096) = %d\n", sbrk(-4096));
-  printf(1, "sbrk(4096) = %d\n", sbrk(4096));
-
-  a[27] = 27;
   
-  */
   exit(0);
 }
