@@ -13,12 +13,12 @@ int main(int argc, char** argv){
             char* argv[] = {"date", '\0'};
             exec("date", argv);
             */
-            //printf(1, "Hijo\n");
+            printf(1, "Hijo\n");
             exit(0);
         }
         default : {
             //setprio(getpid(), NORMAL);
-            //printf(1, "Padre\n");
+            printf(1, "Padre\n");
             exit(0);
         }
     }

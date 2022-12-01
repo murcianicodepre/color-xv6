@@ -176,7 +176,7 @@ main(void)
       if(ret>0 || ret<0) { color = LRED; }
       printf(1, "Output code: %c%d%c\n", color, ret, ocolor);
     } else {
-      printf(1, "Output code: %c%d%c\n", CYAN, WEXITTRAP(status), ocolor);
+      printf(1, "%cTrap code: %c%d%c\n", RED, CYAN, WEXITTRAP(status), ocolor);
     }
   }
   exit(0);

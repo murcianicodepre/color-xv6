@@ -12,6 +12,41 @@ struct {
   struct proc proc[NPROC];
 } ptable;
 
+struct proc* palta = NULL;
+struct proc* pnormal = NULL;
+
+/* Inserta un proceso por el final de la lista */
+struct proc* insertar(struct proc* lista, struct proc* nuevonodo){
+  if(lista==NULL){
+    nuevonodo->sig = nuevonodo; nuevonodo->ant = nuevonodo;
+    return nuevonodo;
+  } else {
+    struct proc* primero = lista;
+    struct proc* ultimo = lista->ant;
+      primero->ant = nuevonodo;
+      ultimo->sig = nuevonodo;
+
+    nuevonodo->sig = primero;
+    nuevonodo->ant = ultimo;
+    return primero;
+  }
+}
+
+/* Elimina el primer nodo de la lista. Devuelve el nuevo puntero */
+struct proc* eliminar(struct proc* lista){
+  if(lista==NULL) return NULL;              // Si la lista está vacía
+  if(lista->sig == lista->ant){             // Si la lista solo tiene un elemento
+    lista->sig = NULL; lista->ant = NULL;
+    return NULL;
+  } else{                                   // Si la lista tiene más de un elemento
+    struct proc* primero = lista->sig;
+    struct proc* ultimo = lista->ant;
+      primero->ant = ultimo;
+      ultimo->sig = primero;
+    return primero;
+  }
+}
+
 static struct proc *initproc;
 
 int nextpid = 1;
@@ -53,7 +88,19 @@ void setprocprio(int pid, enum proc_prio prio){
     for(int i=0; i<NPROC; i++){
         struct proc* p = &(ptable.proc[i]);
         if(p->pid==pid){
+            enum proc_prio oldprio = p->prio;
             p->prio = prio;
+
+            // Si cambiamos su prioridad y está RUNNABLE, tenemos que sacarlo de la lista en la que estaba y ponerlo en la nueva
+            if(p->state == RUNNABLE){
+              if(oldprio==HIGH){ palta = eliminar(palta); }
+              else { pnormal = eliminar(pnormal); }
+
+              if(p->prio == HIGH){ palta = insertar(palta, p); }
+              else { pnormal = insertar(pnormal, p); }
+            }
+            
+
             release(&ptable.lock);
             return;
         }
@@ -158,6 +205,7 @@ userinit(void)
 
   initproc = p;
   p->prio = NORMAL;
+  
   if((p->pgdir = setupkvm()) == 0)
     panic("userinit: out of memory?");
   inituvm(p->pgdir, _binary_initcode_start, (int)_binary_initcode_size);
@@ -181,6 +229,7 @@ userinit(void)
   acquire(&ptable.lock);
 
   p->state = RUNNABLE;
+  pnormal = insertar(pnormal, p);
 
   release(&ptable.lock);
 }
@@ -248,6 +297,9 @@ fork(void)
 
   np->state = RUNNABLE;
   np->prio = curproc->prio;
+  
+  if(np->prio == HIGH){ palta = insertar(palta, np); }      
+  else { pnormal = insertar(pnormal, np); }
 
   release(&ptable.lock);
 
@@ -322,9 +374,6 @@ wait(int* status)
         continue;
       havekids = 1;
       if(p->state == ZOMBIE){     // Un hijo que ha terminado queda como zombie
-        // Found one.
-
-
         if(status != NULL) { *status = p->ret; }
 
         pid = p->pid;
@@ -362,7 +411,7 @@ wait(int* status)
 //  - eventually that process transfers control
 //      via swtch back to the scheduler.
 
-
+/*
 void
 scheduler(void)
 {
@@ -395,28 +444,46 @@ scheduler(void)
       // It should have changed its p->state before coming back.
       c->proc = 0;
     }
-    release(&ptable.lock);
-
+    release(&ptable.lock); 
   }
 }
-
-
-/* Planificador con dos listas
-  > Alta prioridad 
-  > Baja prioridad
 */
 
-/*
+
 void scheduler(void){
     struct proc* p;
     struct cpu* c = mycpu();
     c->proc = 0;
 
+    
     for(;;){
-        sti();
+      sti();
+      acquire(&ptable.lock);
+
+      if(palta==NULL && pnormal==NULL){ release(&ptable.lock); }
+      else{
+        if(palta!=NULL){
+          p = palta;
+          palta = eliminar(palta);
+        } else {
+          p = pnormal;
+          pnormal = eliminar(pnormal);
+        }
+        c->proc = p;
+        switchuvm(p);
+        p->state = RUNNING;
+
+        swtch(&(c->scheduler), p->context);
+        switchkvm();
+
+        c->proc = 0;
+        release(&ptable.lock);
+      }
     }
+    
 }
-*/
+
+
 
 // Enter scheduler.  Must hold only ptable.lock
 // and have changed proc->state. Saves and restores
@@ -448,8 +515,14 @@ sched(void)
 void
 yield(void)
 {
-  acquire(&ptable.lock);  //DOC: yieldlock
-  myproc()->state = RUNNABLE;
+  acquire(&ptable.lock);      //DOC: yieldlock
+  struct proc* p = myproc();
+
+  p->state = RUNNABLE;
+  
+  if(p->prio == HIGH){ palta = insertar(palta, p); }     
+    else { pnormal = insertar(pnormal, p); }
+
   sched();
   release(&ptable.lock);
 }
@@ -523,8 +596,13 @@ wakeup1(void *chan)
   struct proc *p;
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
-    if(p->state == SLEEPING && p->chan == chan)
+    if(p->state == SLEEPING && p->chan == chan){
       p->state = RUNNABLE;
+
+      // Insertamos el proceso en la lista correspondiente
+      if(p->prio == HIGH){ palta = insertar(palta, p); }     
+      else { pnormal = insertar(pnormal, p); }      
+    }
 }
 
 // Wake up all processes sleeping on chan.
@@ -549,8 +627,12 @@ kill(int pid)
     if(p->pid == pid){
       p->killed = 1;
       // Wake process from sleep if necessary.
-      if(p->state == SLEEPING)
+      if(p->state == SLEEPING){
         p->state = RUNNABLE;
+
+        if(p->prio == HIGH){ palta = insertar(palta, p); }     
+        else { pnormal = insertar(pnormal, p); }
+      }
       release(&ptable.lock);
       return 0;
     }
