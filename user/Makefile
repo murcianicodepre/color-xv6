@@ -14,10 +14,13 @@ UPROGS=\
 	ln\
 	ls\
 	mkdir\
+	prioprueba\
 	rm\
 	sh\
 	stressfs\
-	testprio\
+	tprio1\
+	tprio2\
+	tprio3\
 	tsbrk1\
 	tsbrk2\
 	tsbrk3\

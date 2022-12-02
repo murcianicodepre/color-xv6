@@ -31,41 +31,41 @@ int parse_color(char* color){
     switch(color[0]){
         case 'D':           // Color oscuro: DBLUE, DGREEN y DMAGENTA
             switch(color[1]){
-                case 'B': return 0x100;
-                case 'G': return 0x200;
-                case 'M': return 0x500;
+                case 'B': return 0x1;
+                case 'G': return 0x2;
+                case 'M': return 0x5;
             }
         case 'L':           // Color claro: LRED y LGREY
             switch(color[1]){
-                case 'R': return 0xc00;
-                case 'G': return 0x700;
+                case 'R': return 0xc;
+                case 'G': return 0x7;
             }
         case 'B':           // BLACK, BROWN o BLUE
             switch(color[1]){
                 case 'L': 
                     switch(color[2]){
-                        case 'U' : return 0x900;
-                        case 'A' : return 0x000;
+                        case 'U' : return 0x9;
+                        case 'A' : return 0x0;
                     }
-                case 'R': return 0x600;
+                case 'R': return 0x6;
             }
         case 'G':           // GREEN o GREY
             switch(color[3]){
-                case 'E': return 0xa00;
-                case 'Y': return 0x800;
+                case 'E': return 0xa;
+                case 'Y': return 0x8;
             }
         case 'R':           // RED
-            return 0x400;
+            return 0x4;
         case 'C':           // CYAN
-            return 0xb00;
+            return 0xb;
         case 'M':           // MAGENTA
-            return 0xd00;
+            return 0xd;
         case 'Y':           // YELLOW
-            return 0xe00;
+            return 0xe;
         case 'W':           // WHITE
-            return 0xf00;
+            return 0xf;
     }
-    return 0x700;
+    return 0x7;
 }
 
 int main(int argc, char* argv[]){

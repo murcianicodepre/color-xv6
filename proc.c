@@ -15,36 +15,34 @@ struct {
 struct proc* palta = NULL;
 struct proc* pnormal = NULL;
 
-/* Inserta un proceso por el final de la lista */
-struct proc* insertar(struct proc* lista, struct proc* nuevonodo){
-  if(lista==NULL){
-    nuevonodo->sig = nuevonodo; nuevonodo->ant = nuevonodo;
-    return nuevonodo;
-  } else {
-    struct proc* primero = lista;
-    struct proc* ultimo = lista->ant;
-      primero->ant = nuevonodo;
-      ultimo->sig = nuevonodo;
-
-    nuevonodo->sig = primero;
-    nuevonodo->ant = ultimo;
-    return primero;
-  }
+/* Inserta un proceso al final de la lista de prioridad */
+struct proc* insertar(struct proc* lista, struct proc* nodo){
+    if(lista==NULL){                                              // Lista sin elementos
+      nodo->sig = nodo; nodo->ant = nodo; return nodo;          
+    } else {                                                      // Lista con al menos un elemento
+      struct proc* primero = lista;
+      struct proc* ultimo = lista->ant;
+        primero->ant = nodo;
+        ultimo->sig = nodo;
+        nodo->ant = ultimo;
+        nodo->sig = primero;
+        return primero;
+    }
 }
 
-/* Elimina el primer nodo de la lista. Devuelve el nuevo puntero */
+/* Eliminar el proceso más antiguo que se insertó en la lista */
 struct proc* eliminar(struct proc* lista){
-  if(lista==NULL) return NULL;              // Si la lista está vacía
-  if(lista->sig == lista->ant){             // Si la lista solo tiene un elemento
-    lista->sig = NULL; lista->ant = NULL;
-    return NULL;
-  } else{                                   // Si la lista tiene más de un elemento
-    struct proc* primero = lista->sig;
-    struct proc* ultimo = lista->ant;
-      primero->ant = ultimo;
-      ultimo->sig = primero;
-    return primero;
-  }
+    if(lista==NULL){ return NULL; }                               // Lista vacía
+    else if(lista->sig==lista->ant){                              // Lista con un solo elemento
+        lista->sig = NULL; lista->ant = NULL; return NULL;
+    } else {                                                      // Lista con al menos un elemento
+        struct proc* primero = lista;
+        struct proc* ultimo = lista->ant; 
+          (primero->sig)->ant = ultimo;
+          ultimo->sig = (primero->sig);
+          primero->sig = NULL; primero->ant = NULL;
+          return primero->sig;
+    }
 }
 
 static struct proc *initproc;
@@ -88,19 +86,7 @@ void setprocprio(int pid, enum proc_prio prio){
     for(int i=0; i<NPROC; i++){
         struct proc* p = &(ptable.proc[i]);
         if(p->pid==pid){
-            enum proc_prio oldprio = p->prio;
             p->prio = prio;
-
-            // Si cambiamos su prioridad y está RUNNABLE, tenemos que sacarlo de la lista en la que estaba y ponerlo en la nueva
-            if(p->state == RUNNABLE){
-              if(oldprio==HIGH){ palta = eliminar(palta); }
-              else { pnormal = eliminar(pnormal); }
-
-              if(p->prio == HIGH){ palta = insertar(palta, p); }
-              else { pnormal = insertar(pnormal, p); }
-            }
-            
-
             release(&ptable.lock);
             return;
         }
@@ -228,9 +214,9 @@ userinit(void)
   // because the assignment might not be atomic.
   acquire(&ptable.lock);
 
-  p->state = RUNNABLE;
   pnormal = insertar(pnormal, p);
-
+  p->state = RUNNABLE;
+  
   release(&ptable.lock);
 }
 
@@ -295,11 +281,14 @@ fork(void)
 
   acquire(&ptable.lock);
 
-  np->state = RUNNABLE;
   np->prio = curproc->prio;
-  
-  if(np->prio == HIGH){ palta = insertar(palta, np); }      
+  if(np->prio==HIGH){ palta = insertar(palta, np); }
   else { pnormal = insertar(pnormal, np); }
+
+  //if(np->pid==2) cprintf("%s insertado\n", np->name);
+
+  np->state = RUNNABLE;
+
 
   release(&ptable.lock);
 
@@ -366,6 +355,7 @@ wait(int* status)
   struct proc *curproc = myproc();
 
   acquire(&ptable.lock);
+  //cprintf("wait %d\n", curproc->pid);
   for(;;){
     // Scan through table looking for exited children.
     havekids = 0;
@@ -412,9 +402,7 @@ wait(int* status)
 //      via swtch back to the scheduler.
 
 /*
-void
-scheduler(void)
-{
+void scheduler(void){
   struct proc *p;
   struct cpu *c = mycpu();
   c->proc = 0;
@@ -449,40 +437,31 @@ scheduler(void)
 }
 */
 
-
 void scheduler(void){
     struct proc* p;
     struct cpu* c = mycpu();
     c->proc = 0;
 
-    
     for(;;){
-      sti();
-      acquire(&ptable.lock);
+        sti();
+        acquire(&ptable.lock);
 
-      if(palta==NULL && pnormal==NULL){ release(&ptable.lock); }
-      else{
-        if(palta!=NULL){
+        if(palta!=NULL || pnormal!=NULL){
           p = palta;
-          palta = eliminar(palta);
-        } else {
-          p = pnormal;
-          pnormal = eliminar(pnormal);
+          if(p!=NULL){ palta = eliminar(palta); }
+          else{ p = pnormal; pnormal = eliminar(pnormal); }
+
+          c->proc = p;
+          switchuvm(p);
+          p->state = RUNNING;
+          swtch(&(c->scheduler), p->context);
+          switchkvm();
+          c->proc = 0;
         }
-        c->proc = p;
-        switchuvm(p);
-        p->state = RUNNING;
 
-        swtch(&(c->scheduler), p->context);
-        switchkvm();
-
-        c->proc = 0;
         release(&ptable.lock);
-      }
     }
-    
 }
-
 
 
 // Enter scheduler.  Must hold only ptable.lock
@@ -518,10 +497,10 @@ yield(void)
   acquire(&ptable.lock);      //DOC: yieldlock
   struct proc* p = myproc();
 
+  if(p->prio==HIGH){ palta = insertar(palta, p); }
+  else{ pnormal = insertar(pnormal, p); }
+
   p->state = RUNNABLE;
-  
-  if(p->prio == HIGH){ palta = insertar(palta, p); }     
-    else { pnormal = insertar(pnormal, p); }
 
   sched();
   release(&ptable.lock);
@@ -597,11 +576,11 @@ wakeup1(void *chan)
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if(p->state == SLEEPING && p->chan == chan){
-      p->state = RUNNABLE;
 
-      // Insertamos el proceso en la lista correspondiente
-      if(p->prio == HIGH){ palta = insertar(palta, p); }     
-      else { pnormal = insertar(pnormal, p); }      
+      if(p->prio==HIGH){ palta = insertar(palta, p); }
+      else{ pnormal = insertar(pnormal, p); }
+
+      p->state = RUNNABLE;
     }
 }
 
@@ -628,10 +607,10 @@ kill(int pid)
       p->killed = 1;
       // Wake process from sleep if necessary.
       if(p->state == SLEEPING){
-        p->state = RUNNABLE;
-
-        if(p->prio == HIGH){ palta = insertar(palta, p); }     
+        if(p->prio==HIGH){ palta = insertar(palta, p); }
         else { pnormal = insertar(pnormal, p); }
+
+        p->state = RUNNABLE;
       }
       release(&ptable.lock);
       return 0;
@@ -649,12 +628,12 @@ void
 procdump(void)
 {
   static char *states[] = {
-  [UNUSED]    "unused",
-  [EMBRYO]    "embryo",
-  [SLEEPING]  "sleep ",
-  [RUNNABLE]  "runble",
-  [RUNNING]   "run   ",
-  [ZOMBIE]    "zombie"
+  [UNUSED]    "unused  ",
+  [EMBRYO]    "embryo  ",
+  [SLEEPING]  "sleep   ",
+  [RUNNABLE]  "runnable",
+  [RUNNING]   "run     ",
+  [ZOMBIE]    "zombie  "
   };
   int i;
   struct proc *p;

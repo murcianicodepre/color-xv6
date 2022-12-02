@@ -114,7 +114,7 @@ int sys_color(void){
     /* Check if color value is valid */
     if(c<0 || c>3840) return -1;
 
-    /* Update FOREGROUND_COLOR with function */
+    /* Update FOREGROUND_COLOR  */
     setColor(c);    
     return 0;
 }

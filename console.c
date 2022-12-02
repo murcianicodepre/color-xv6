@@ -256,7 +256,8 @@ void drawline(int ax, int ay, int bx, int by, int color, int pixel){
 
     /* Bucle principal del algoritmo */
     do{
-      crt[80*(y-1) + x] = (pixel & 0xff) | color;
+      int linecolor = (color) | ((BACKGROUND_COLOR << 4));
+      crt[80*(y-1) + x] = (pixel & 0xff) | (linecolor << 8);
       if(av>=0){          // Aumentan inclinados
         x+=incrementoXi;
         y+=incrementoYi;
@@ -295,7 +296,7 @@ cgaputc(int c)
   else if((c >= 0xe6 && c <= 0xef) || c == RED || c == LRED || c == 0x10 || c == 0x11 || c == 0x1e || c == 0x1f ){ FOREGROUND_COLOR = getcolorcode(c); }
   else if(c >= 0xc0 && c <= 0xcf){ BACKGROUND_COLOR = getcolorcode(c); }
   else {
-    int color = (FOREGROUND_COLOR) | ((BACKGROUND_COLOR << 1) | 0x00);
+    int color = (FOREGROUND_COLOR) | ((BACKGROUND_COLOR << 4));
     crt[pos++] = (c & 0xff) | (color << 8);
   }
 
