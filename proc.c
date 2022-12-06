@@ -362,7 +362,7 @@ wait(int* status)
 //  - eventually that process transfers control
 //      via swtch back to the scheduler.
 
-
+/*
 void scheduler(void){
   struct proc *p;
   struct cpu *c = mycpu();
@@ -396,46 +396,51 @@ void scheduler(void){
     release(&ptable.lock); 
   }
 }
+*/
 
-
-/*
 void scheduler(void){
-    int nalta;
-    struct proc* p;
+    uint nalta;
     struct proc* pnormal = 0;
+    struct proc* p;
     struct cpu* c = mycpu();
-    uint normalEncontrado = 0;
       c->proc = 0;
 
     for(;;){
         sti();
         acquire(&ptable.lock);
         nalta = 0;
-        for(p=ptable.proc; p<&ptable.proc[NPROC]; p++){
-            if(p->state!=RUNNABLE) continue;
-            else if(p->prio==HIGH){
-              nalta++;
-              c->proc = p;
-              switchuvm(p);
-              p->state = RUNNING;
-              swtch(&(c->scheduler), p->context);
-              switchkvm();
-              c->proc = 0;
-            } else if(!normalEncontrado && p!=pnormal){ pnormal = p; normalEncontrado = 1; }
+
+        // Empezamos con una primera pasada, ejecutando los procesos de prioridad alta. Guardamos la posición del primero de prioridad normal
+        for(p = ptable.proc; p<&ptable.proc[NPROC]; p++){
+            if(p->state!=RUNNABLE){ continue; }
+            if(p->prio==HIGH){
+                nalta++;
+                c->proc = p;
+                switchuvm(p);
+                p->state = RUNNING;
+                swtch(&(c->scheduler), p->context);
+                switchkvm();
+                c->proc = 0;
+            } else if(!pnormal){ pnormal = p; } 
         }
-        if(!nalta && pnormal){
-            c->proc = pnormal;
-            switchuvm(pnormal);
-            pnormal->state = RUNNING;
-            swtch(&(c->scheduler), pnormal->context);
+
+        // Hacemos una segunda pasada para los procesos de prioridad normal, solo si no se encontró ningún proceso de prioridad alta
+        if(!nalta){
+          for(p = pnormal; p<&ptable.proc[NPROC]; p++){
+            if(p->state!=RUNNABLE){ continue; }
+            c->proc = p;
+            switchuvm(p);
+            p->state = RUNNING;
+            swtch(&(c->scheduler), p->context);
             switchkvm();
             c->proc = 0;
-            normalEncontrado = 0;
+          } 
         }
+        
         release(&ptable.lock);
     }
 }
-*/
+
 
 // Enter scheduler.  Must hold only ptable.lock
 // and have changed proc->state. Saves and restores
