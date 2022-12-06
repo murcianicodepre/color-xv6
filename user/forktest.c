@@ -46,12 +46,12 @@ forktest(void)
     exit(1);
   }
 
-  printf(1, "fork test %cok%c\n", GREEN, LGREY );
+  printf(1, "fork test %cok%c\n", GREEN, LGREY);
 }
 
 int
 main(void)
 {
   forktest();
-  exit(1);
+  exit(0);
 }

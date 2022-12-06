@@ -12,38 +12,6 @@ struct {
   struct proc proc[NPROC];
 } ptable;
 
-struct proc* palta = NULL;
-struct proc* pnormal = NULL;
-
-/* Inserta un proceso al final de la lista de prioridad */
-struct proc* insertar(struct proc* lista, struct proc* nodo){
-    if(lista==NULL){                                              // Lista sin elementos
-      nodo->sig = nodo; nodo->ant = nodo; return nodo;          
-    } else {                                                      // Lista con al menos un elemento
-      struct proc* primero = lista;
-      struct proc* ultimo = lista->ant;
-        primero->ant = nodo;
-        ultimo->sig = nodo;
-        nodo->ant = ultimo;
-        nodo->sig = primero;
-        return primero;
-    }
-}
-
-/* Eliminar el proceso más antiguo que se insertó en la lista */
-struct proc* eliminar(struct proc* lista){
-    if(lista==NULL){ return NULL; }                               // Lista vacía
-    else if(lista->sig==lista->ant){                              // Lista con un solo elemento
-        lista->sig = NULL; lista->ant = NULL; return NULL;
-    } else {                                                      // Lista con al menos un elemento
-        struct proc* primero = lista;
-        struct proc* ultimo = lista->ant; 
-          (primero->sig)->ant = ultimo;
-          ultimo->sig = (primero->sig);
-          primero->sig = NULL; primero->ant = NULL;
-          return primero->sig;
-    }
-}
 
 static struct proc *initproc;
 
@@ -80,19 +48,17 @@ enum proc_prio getprocprio(int pid){
     return NORMAL;          // No debería alcanzarse
 }
 
-/* Dado un pid y una prioridad, se la asigana al proceso correspondiente */
+/* Establece la prioridad de un proceso */
 void setprocprio(int pid, enum proc_prio prio){
-    acquire(&ptable.lock);
-    for(int i=0; i<NPROC; i++){
-        struct proc* p = &(ptable.proc[i]);
-        if(p->pid==pid){
-            p->prio = prio;
-            release(&ptable.lock);
-            return;
-        }
-    }
-    release(&ptable.lock);
-    return;                 // No debería alcanzarse
+  struct proc* p;
+
+  acquire(&ptable.lock);
+  p = ptable.proc;
+  while(p<&ptable.proc[NPROC]){
+      if(p->pid==pid){ p->prio = prio; release(&ptable.lock); return; }
+      else p++;
+  }
+  release(&ptable.lock);
 }
 
 
@@ -214,7 +180,7 @@ userinit(void)
   // because the assignment might not be atomic.
   acquire(&ptable.lock);
 
-  pnormal = insertar(pnormal, p);
+  //pnormal = insertar(pnormal, p);
   p->state = RUNNABLE;
   
   release(&ptable.lock);
@@ -282,13 +248,8 @@ fork(void)
   acquire(&ptable.lock);
 
   np->prio = curproc->prio;
-  if(np->prio==HIGH){ palta = insertar(palta, np); }
-  else { pnormal = insertar(pnormal, np); }
-
-  //if(np->pid==2) cprintf("%s insertado\n", np->name);
 
   np->state = RUNNABLE;
-
 
   release(&ptable.lock);
 
@@ -401,7 +362,7 @@ wait(int* status)
 //  - eventually that process transfers control
 //      via swtch back to the scheduler.
 
-/*
+
 void scheduler(void){
   struct proc *p;
   struct cpu *c = mycpu();
@@ -435,34 +396,46 @@ void scheduler(void){
     release(&ptable.lock); 
   }
 }
-*/
 
+
+/*
 void scheduler(void){
+    int nalta;
     struct proc* p;
+    struct proc* pnormal = 0;
     struct cpu* c = mycpu();
-    c->proc = 0;
+    uint normalEncontrado = 0;
+      c->proc = 0;
 
     for(;;){
         sti();
         acquire(&ptable.lock);
-
-        if(palta!=NULL || pnormal!=NULL){
-          p = palta;
-          if(p!=NULL){ palta = eliminar(palta); }
-          else{ p = pnormal; pnormal = eliminar(pnormal); }
-
-          c->proc = p;
-          switchuvm(p);
-          p->state = RUNNING;
-          swtch(&(c->scheduler), p->context);
-          switchkvm();
-          c->proc = 0;
+        nalta = 0;
+        for(p=ptable.proc; p<&ptable.proc[NPROC]; p++){
+            if(p->state!=RUNNABLE) continue;
+            else if(p->prio==HIGH){
+              nalta++;
+              c->proc = p;
+              switchuvm(p);
+              p->state = RUNNING;
+              swtch(&(c->scheduler), p->context);
+              switchkvm();
+              c->proc = 0;
+            } else if(!normalEncontrado && p!=pnormal){ pnormal = p; normalEncontrado = 1; }
         }
-
+        if(!nalta && pnormal){
+            c->proc = pnormal;
+            switchuvm(pnormal);
+            pnormal->state = RUNNING;
+            swtch(&(c->scheduler), pnormal->context);
+            switchkvm();
+            c->proc = 0;
+            normalEncontrado = 0;
+        }
         release(&ptable.lock);
     }
 }
-
+*/
 
 // Enter scheduler.  Must hold only ptable.lock
 // and have changed proc->state. Saves and restores
@@ -495,12 +468,8 @@ void
 yield(void)
 {
   acquire(&ptable.lock);      //DOC: yieldlock
-  struct proc* p = myproc();
 
-  if(p->prio==HIGH){ palta = insertar(palta, p); }
-  else{ pnormal = insertar(pnormal, p); }
-
-  p->state = RUNNABLE;
+  myproc()->state = RUNNABLE;
 
   sched();
   release(&ptable.lock);
@@ -576,10 +545,6 @@ wakeup1(void *chan)
 
   for(p = ptable.proc; p < &ptable.proc[NPROC]; p++)
     if(p->state == SLEEPING && p->chan == chan){
-
-      if(p->prio==HIGH){ palta = insertar(palta, p); }
-      else{ pnormal = insertar(pnormal, p); }
-
       p->state = RUNNABLE;
     }
 }
@@ -607,9 +572,6 @@ kill(int pid)
       p->killed = 1;
       // Wake process from sleep if necessary.
       if(p->state == SLEEPING){
-        if(p->prio==HIGH){ palta = insertar(palta, p); }
-        else { pnormal = insertar(pnormal, p); }
-
         p->state = RUNNABLE;
       }
       release(&ptable.lock);
@@ -632,7 +594,7 @@ procdump(void)
   [EMBRYO]    "embryo  ",
   [SLEEPING]  "sleep   ",
   [RUNNABLE]  "runnable",
-  [RUNNING]   "run     ",
+  [RUNNING]   "running ",
   [ZOMBIE]    "zombie  "
   };
   int i;
@@ -647,7 +609,7 @@ procdump(void)
       state = states[p->state];
     else
       state = "???";
-    cprintf("%d %s %s", p->pid, state, p->name);
+    cprintf("%d %s %s %d", p->pid, state, p->name, p->prio);
     if(p->state == SLEEPING){
       getcallerpcs((uint*)p->context->ebp+2, pc);
       for(i=0; i<10 && pc[i] != 0; i++)

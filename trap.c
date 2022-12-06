@@ -111,11 +111,13 @@ trap(struct trapframe *tf)
         /* En otro caso, reservamos páginas */
         char* mem = kalloc();
         if(mem == 0){ cprintf("%clazy alloc: could not allocate page (1)\n%c", RED, ocolor); myproc()->killed = 1; }
-        memset(mem, 0, PGSIZE);
-        if(mappages(myproc()->pgdir, (void*)verr, PGSIZE, V2P(mem), PTE_W | PTE_U) < 0){
-            cprintf("%clazy alloc: could not allocate page (2)\n%c", RED, ocolor);
-            kfree(mem);
-            myproc()->killed = 1;
+        else {
+          memset(mem, 0, PGSIZE);
+          if(mappages(myproc()->pgdir, (void*)verr, PGSIZE, V2P(mem), PTE_W | PTE_U) < 0){
+              cprintf("%clazy alloc: could not allocate page (2)\n%c", RED, ocolor);
+              kfree(mem);
+              myproc()->killed = 1;
+          }
         }
 
         break;

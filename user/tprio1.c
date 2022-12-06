@@ -10,7 +10,7 @@ main(int argc, char *argv[])
   
   // Establecer máxima prioridad. Debe hacer que el shell ni aparezca hasta
   // que termine
-  setprio (getpid(), HIGH);
+  setprio(getpid(), HIGH);
 
   int r = 0;
   
