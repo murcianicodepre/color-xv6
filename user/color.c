@@ -69,9 +69,9 @@ int parse_color(char* color){
 }
 
 int main(int argc, char* argv[]){
-    int c = 0x700;
+    int c = 0x07;
     if(argc==1) { 
-        color(0x700);
+        color(0x07);
         printUsage(argv[0]);
         exit(1);
     }

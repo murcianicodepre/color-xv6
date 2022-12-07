@@ -87,7 +87,6 @@ extern int sys_close(void);
 extern int sys_clear(void);
 extern int sys_color(void);
 extern int sys_date(void);
-extern int sys_draw(void);
 extern int sys_drawline(void);
 extern int sys_dup(void);
 extern int sys_dup2(void);
@@ -142,7 +141,6 @@ static int (*syscalls[])(void) = {
 [SYS_color]   sys_color,
 [SYS_getcolor] sys_getcolor,
 [SYS_clear]   sys_clear,
-[SYS_draw]    sys_draw,
 [SYS_drawline] sys_drawline
 };
 

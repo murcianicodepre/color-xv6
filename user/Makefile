@@ -14,7 +14,6 @@ UPROGS=\
 	ln\
 	ls\
 	mkdir\
-	prioprueba\
 	rm\
 	sh\
 	stressfs\

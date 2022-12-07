@@ -414,7 +414,6 @@ void scheduler(void){
         sti();
         acquire(&ptable.lock);
         nalta = 0;
-
         for(p = ptable.proc; p<&ptable.proc[NPROC]; p++){
             if(p->state!=RUNNABLE){ continue; }
             if(p->prio==HIGH){
@@ -427,11 +426,9 @@ void scheduler(void){
                 c->proc = 0;
             } else if(!pnormal){ pnormal = p; } 
         }
-
         if(!nalta && pnormal){
           for(p = pnormal; p<&ptable.proc[NPROC]; p++){
             if(p->state!=RUNNABLE){ continue; }
-            cprintf("Ejecutando %s, %d\n", p->name, p->pid);
             c->proc = p;
             switchuvm(p);
             p->state = RUNNING;
@@ -440,9 +437,7 @@ void scheduler(void){
             c->proc = 0;
           } 
         }
-
         pnormal = 0;
-        
         release(&ptable.lock);
     }
 }

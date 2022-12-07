@@ -30,7 +30,6 @@ extern int color(int);
 extern int getcolor();
 extern int getprio(int);
 extern int clear();
-extern int draw(int, int, int, int, char*, char*);
 extern int drawline(int, int, int, int, int, int);
 
 // ulib.c

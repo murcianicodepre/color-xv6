@@ -112,7 +112,7 @@ int sys_color(void){
     }
 
     /* Check if color value is valid */
-    if(c<0 || c>3840) return -1;
+    if(c<0 || c>255) return -1;
 
     /* Update FOREGROUND_COLOR  */
     setColor(c);    
@@ -127,24 +127,6 @@ int sys_getcolor(void){
 /* Limpia la pantalla */
 int sys_clear(void){
     clear();
-    return 0;
-}
-
-/* Dibuja un buffer como imagen por pantalla */
-int sys_draw(void){
-    /* Recuperamos los 6 argumentos de la pila del usuario */
-    int posx, posy, sx, sy;
-    char* img; 
-    char* color;
-    if(argint(0, &posx) < 0){ return -1; }
-    if(argint(1, &posy) < 0){ return -1; }
-    if(argint(2, &sx) < 0){ return -1; }
-    if(argint(3, &sy) < 0){ return -1; }
-    if(argptr(4, (void**)&img, sx*sy) < 0){ return -1; }
-    if(argptr(5, (void**)&color, sx*sy) < 0){ return -1; }
-
-    /* Llamamos a la función de console.c dibujar en el frame buffer */
-    draw(posx, posy, sx, sy, img, color);
     return 0;
 }
 

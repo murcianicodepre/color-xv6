@@ -215,17 +215,6 @@ void clear(){
   outb(CRTPORT+1, pos);
 }
 
-/* Dibuja un array de hasta 80x25 bytes por pantalla. Solo modifica el frame buffer */
-void draw(int posx, int posy, int sx, int sy, char* img, char* color){
-    int sigbyte = 0;
-    for(int y=0; y<sy; y++){      // Para cada línea de la imagen...
-        for(int x=0; x<sx; x++){
-            crt[(posy+y-1)*80 + posx+x] = (img[sigbyte] & 0xff) | getcolorcode(color[sigbyte]) ;
-            sigbyte++;
-        }
-    }
-}
-
 /* Dibuja una línea entre dos coordenadas usando un píxel concreto y de un color */
 void drawline(int ax, int ay, int bx, int by, int color, int pixel){
     /* Algoritmo de Bresenham - https://es.wikipedia.org/wiki/Algoritmo_de_Bresenham#Pseudoc%C3%B3digo_del_algoritmo */
@@ -270,9 +259,11 @@ void drawline(int ax, int ay, int bx, int by, int color, int pixel){
     } while(x!=bx);
 }
 
-/* Fuerza el cambio del color actual */
+/* Cambia el color de fondo y de primer plano */
 void setColor(int colorcode){
-    FOREGROUND_COLOR = colorcode;
+    // colorcode es el código de color en unentero de 16 bits, los primeros 8 para el fondo y los siguientes para el texto
+    FOREGROUND_COLOR = colorcode & 0x0f;
+    BACKGROUND_COLOR = colorcode >> 4;
 }
 
 /* Devuelve el color actual */

@@ -23,9 +23,8 @@
 #define SYS_close  22
 #define SYS_date   23
 #define SYS_clear  24
-#define SYS_draw   25
-#define SYS_getcolor 26
-#define SYS_color  27
-#define SYS_drawline 28
-#define SYS_getprio 29
-#define SYS_setprio 30
+#define SYS_getcolor 25
+#define SYS_color  26
+#define SYS_drawline 27
+#define SYS_getprio 28
+#define SYS_setprio 29
