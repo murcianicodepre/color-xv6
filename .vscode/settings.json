@@ -6,6 +6,7 @@
         "types.h": "c",
         "fs.h": "c",
         "defs.h": "c",
-        "proc.h": "c"
+        "proc.h": "c",
+        "cstdlib": "c"
     }
 }

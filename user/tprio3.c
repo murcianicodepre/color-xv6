@@ -32,6 +32,7 @@ main(int argc, char *argv[])
   setprio (getpid(), HIGH);
 
   fork();  // Ambos ejecutan:
+  //fork();
   do_calc("Hi");
   exit(1);
 }

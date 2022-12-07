@@ -169,7 +169,7 @@ main(void)
     if(fork1() == 0)
       runcmd(parsecmd(buf));
     wait(&status);
-    /*
+    
     char ocolor = getcolor();
     if(WIFEXITED(status)){
       char color = GREEN;
@@ -179,7 +179,7 @@ main(void)
     } else {
       printf(1, "%cTrap code: %c%d%c\n", RED, CYAN, WEXITTRAP(status), ocolor);
     }
-    */
+    
   }
   exit(0);
 }

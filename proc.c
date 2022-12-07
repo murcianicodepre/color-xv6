@@ -45,7 +45,7 @@ enum proc_prio getprocprio(int pid){
         }
     }
     release(&ptable.lock);
-    return NORMAL;          // No debería alcanzarse
+    return NORMAL;                                    // No debería alcanzarse
 }
 
 /* Establece la prioridad de un proceso */
@@ -301,7 +301,7 @@ exit(int status)
 
   // Jump into the scheduler, never to return.
   curproc->state = ZOMBIE;
-  curproc->ret = status << 8;
+  curproc->ret = status;
   sched();
   panic("zombie exit");
 }
@@ -325,6 +325,7 @@ wait(int* status)
         continue;
       havekids = 1;
       if(p->state == ZOMBIE){     // Un hijo que ha terminado queda como zombie
+
         if(status != NULL) { *status = p->ret; }
 
         pid = p->pid;
@@ -398,6 +399,10 @@ void scheduler(void){
 }
 */
 
+/* - Planificador con prioridades -
+    > Primero se ejecutan los procesos con prioridad alta
+    > Si no hay ninguno, se planifica uno de los de normal y se vuelve a recorrer la lista en búsqueda de otro de prioridad alta
+*/
 void scheduler(void){
     uint nalta;
     struct proc* pnormal = 0;
@@ -410,7 +415,6 @@ void scheduler(void){
         acquire(&ptable.lock);
         nalta = 0;
 
-        // Empezamos con una primera pasada, ejecutando los procesos de prioridad alta. Guardamos la posición del primero de prioridad normal
         for(p = ptable.proc; p<&ptable.proc[NPROC]; p++){
             if(p->state!=RUNNABLE){ continue; }
             if(p->prio==HIGH){
@@ -424,10 +428,10 @@ void scheduler(void){
             } else if(!pnormal){ pnormal = p; } 
         }
 
-        // Hacemos una segunda pasada para los procesos de prioridad normal, solo si no se encontró ningún proceso de prioridad alta
-        if(!nalta){
+        if(!nalta && pnormal){
           for(p = pnormal; p<&ptable.proc[NPROC]; p++){
             if(p->state!=RUNNABLE){ continue; }
+            cprintf("Ejecutando %s, %d\n", p->name, p->pid);
             c->proc = p;
             switchuvm(p);
             p->state = RUNNING;
@@ -436,6 +440,8 @@ void scheduler(void){
             c->proc = 0;
           } 
         }
+
+        pnormal = 0;
         
         release(&ptable.lock);
     }

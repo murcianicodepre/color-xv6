@@ -18,7 +18,7 @@ sys_exit(void)
 {
   int status;
   if(argint(0, &status) < 0){ return -1; }    // Recuperamos el valor de salida de la pila del usuario
-  exit(status);                               // El valor está en los 8 bits inferiores
+  exit(status<<8);                            // Dejamos el valor desplazado para que los macros funcionen
   return 0;                                   // No debería alcanzarse
 }
 
